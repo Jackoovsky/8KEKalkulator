@@ -2,286 +2,197 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8" />
-<title>Kalkulator Loadoutu - pełna wersja</title>
+<title>Kalkulator Loadoutu</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #0f1419;
-    color: #e6e6e6;
-    margin: 0; padding: 20px;
-  }
-  h1 {
-    text-align: center;
-    margin-bottom: 15px;
-  }
-  button.reset-btn {
-    display: block;
-    margin: 0 auto 20px;
-    padding: 10px 20px;
-    background: #8b0000;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-  }
-  button.reset-btn:hover {
-    background: #a30000;
-  }
-  .category {
-    margin-bottom: 20px;
-    border: 1px solid #333;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  .category-header {
-    background: #1f2a33;
-    padding: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    user-select: none;
-  }
-  .category-header:hover {
-    background: #2c3b47;
-  }
-  .category-content {
-    display: none;
-    padding: 10px;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-  }
-  th, td {
-    border: 1px solid #333;
-    padding: 6px;
-    text-align: center;
-    word-wrap: break-word;
-  }
-  th {
-    background: #222d38;
-  }
-  input[type=number] {
-    width: 60px;
-    background: #111;
-    color: white;
-    border: 1px solid #555;
-    border-radius: 4px;
-    text-align: center;
-  }
-  .subtotal {
-    margin-top: 6px;
-    text-align: right;
-    font-weight: bold;
-    font-size: 18px;
-    color: #88cc88;
-  }
-  .sticky-total {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: #111;
-    padding: 15px;
-    text-align: center;
-    font-size: 22px;
-    border-top: 2px solid #444;
-    font-weight: bold;
-    color: #ffbb33;
-  }
+body { font-family: Arial; background:#0f1419; color:#e6e6e6; margin:0; padding:15px; }
+h1 { text-align:center; }
+.category { margin-bottom:15px; border:1px solid #333; border-radius:8px; }
+.category-header { background:#1f2a33; padding:10px; cursor:pointer; }
+.category-content { display:none; padding:10px; overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+td, th { border:1px solid #333; padding:5px; text-align:center; }
+input { width:50px; background:#111; color:white; border:1px solid #555; }
+.sticky-total { position:fixed; bottom:0; width:100%; background:#111; padding:10px; text-align:center; font-weight:bold; }
+button { margin:5px; }
 </style>
 </head>
 <body>
 
 <h1>Kalkulator Loadoutu</h1>
-<button class="reset-btn" onclick="resetAll()">🔄 Reset Loadoutu</button>
+
+<select id="preset"></select>
+<button onclick="applyPreset()">Zastosuj preset</button>
+<button onclick="resetAll()">Reset</button>
 
 <div id="app"></div>
 
-<div class="sticky-total">💰 SUMA CAŁKOWITA: <span id="total">0</span></div>
+<div class="sticky-total">SUMA: <span id="total">0</span></div>
 
 <script>
+// -------------------- DANE ITEMS --------------------
 const data = {
-  "🧥 Plecaki i Ubrania": [
-    ["AN/RPC-77 radio", 100], ["spadochron", 25], ["medical tent", 100],
-    ['plecak "mały"', 0], ['plecak "zwykły"', 20], ['plecak "lodówka"', 80],
-    ["jammer backpck", 200], ["NVG", 200], ["Stroboskop", 20]
-  ],
-
-  "🔫 Bronie, Dodatki i Amunicja": [
-    ["PKM", 60], ["M249 SAW", 50], ["M240B", 60], ["SWD", 60],
-    ["Grot wyborowy", 70], ["M40A5", 70], ["RPG-7", 100],
-    ["RPG-75", 70], ["M72A3 LAW", 75], ["GROM", 150],
-    ["Mine detector", 100], ["tłumik zwykły", 50], ["tłumik DMR", 100],
-    ["optyka termal/NVG", 250], ["granatnik GP-25", 50], ["latarka / laser", 20],
-    ["standardowa 5,56/5,45", 1], ["7,62 Beryl / Sa-58", 2], ["pistoletowa", 1],
-    ["SWD 7,62 standard", 2], ["SWD 7,62 snajperska", 3], ["SWD 7,62 API", 5],
-    ["SWD 7,62 Incendiary", 5], ["7,62 Grot standard", 3], ["7,62 Grot AP", 6],
-    ["7,62 Grot SB", 6], ["M40A5 M61", 4], ["M40A5 M62", 3], ["M40A5 M80", 2],
-    ["M110 M80A1", 0], ["M110 M993", 0], ["PKM 100 Rnd", 5], ["PKM 250 Rnd", 10],
-    ["NSV incendiary AP", 15], ["NSV API", 15], ["7,62 450 rnd AP", 45],
-    ["7,62 2000 rnd AP", 150], ["7,62 200 rnd FMJ/Tracer", 15],
-    ["7,62 200 rnd AP", 20], ["M249 200 rnd", 20], ["12,7 100 rnd M2 FMJ", 20],
-    ["12,7 100 rnd M2 AP", 30], ["12,7 100 rnd M2 INC", 40], ["AGS-17 HE", 50],
-    ["RPG 70mm", 10], ["RPG 93mm", 20], ["RPG 105mm", 30], ["granatnik HE", 5],
-    ["granatnik smoke", 2], ["granatnik flara", 2]
-  ],
-
-  "🎒 Wyposażenie": [
-    ["lornetka zwykła", 10], ["lornetka dalmierz", 30], ["grot granatnik", 50],
-    ["Granat zaczepny", 4], ["Granat dymny", 2], ["Mina AP", 10], ["Mina AT", 25],
-    ["ładunek M112", 10], ["detonator", 20], ["AN/PSN 13 DAGR", 50], ["sandbag", 1],
-    ["sandbag box", 20], ["wirecutters", 2], ["NSV", 150], ["6T7 Tripod", 50],
-    ["M252 Baseplate", 50], ["M252 Bipod", 50], ["M252 Cannon", 200], ["KORD", 150],
-    ["AGS-17", 500], ["6G10 Tripod", 50], ["6T5 Tripod", 50]
-  ],
-
-  "💊 Medykamenty": [
-    ["Morphine", 1], ["Epinephrine", 2], ["Nalexone", 2],
-    ["Metopropol", 2], ["Phenylepine", 2], ["Sniff", 2],
-    ["Saline solution", 3], ["NCD kit", 2], ["King LT", 2],
-    ["Chest Seal", 2], ["Medical Kit", 20]
-  ],
-
-  "🤖 Drony": [
-    ["drone googles", 200], ["dron SAL", 800], ["battery SAL", 100],
-    ["Drone controller", 100], ["Drone antena", 250], ["Command station", 250]
-  ],
-
-  "🚗 Pojazdy naziemne": [
-    ["M998", 100], ["UAZ-469", 100], ["M1025", 150], ["UAZ-469 - PKM", 150],
-    ["M1025 - .50", 200], ["Ambulans M997", 200], ["M997 Jammer", 200],
-    ["Furgonetka dostawcza UAZ-452", 200], ["M1280", 250], ["M1025 - M2", 300],
-    ["M1281 - M2HB", 350], ["M1281 - M2HB", 350], ["M1025 M2 Opancerzony", 350],
-    ["Humvee Inżynieryjny", 400], ["STAR 266 Transport Truck", 500],
-    ["M1281 - M134", 500], ["STAR 266 Fuel Truck", 600],
-    ["STAR 266 Engineer Truck", 600], ["STAR 266 Naprawczy", 600],
-    ["STAR 266 CRANE", 600], ["STAR 266 Arsenal Truck", 600],
-    ["UAZ469 z Granatnikiem AGS17", 600], ["STAR 266 M2HB", 800],
-    ["STAR 266 MORTAR", 800], ["Pojazdy zwiadowczy BRDM-2", 800],
-    ["KTO ROSOMAK transportowy bez działka", 800], ["STAR 266 Hibneryt", 1000],
-    ["Transporter opancerzony BTR-70", 1000], ["STAR 266 Howitzer", 1500],
-    ["Pojazdy zwiadowczy LAV-25", 1500], ["KTO ROSOMAK", 2000],
-    ["M2A2", 3000], ["PT-91", 7500], ["M1A1", 8000], ["M1A1 - TUSK", 9000]
-  ],
-
-  "✈️ Pojazdy powietrzne": [
-    ["MH-6M", 1500], ["Mi-8MT Armed Transport", 2500], ["Mi-8MT Supply", 2500],
-    ["Mi-8MT Construction", 3500], ["Mi-8MT FAB250", 5000], ["CH53 Stalion", 8000],
-    ["Mi-24V Armed UB-16-57", 10000], ["Mi-24P Armed B-8V20A", 15000],
-    ["Mi-24V Armed UPK-23", 20000]
-  ],
-
-  "💥 Pociski dalekiego zasięgu": [
-    ["81mm Fragmentation", 10], ["81mm smoke", 5], ["81mm illumination", 5],
-    ["M107 HE", 35], ["M231 charge 1L", 5], ["M231 chaege - 2L", 10],
-    ["M232 charge 3H", 15], ["M232 charge 4H", 20], ["M232 charge 5H", 25]
-  ]
+"Plecaki i Ubrania":[
+["AN/RPC-77 radio",100],["spadochron",25],["medical tent",100],
+['plecak "mały"',0],['plecak "zwykły"',20],['plecak "lodówka"',80],
+["jammer backpck",200],["NVG",200],["Stroboskop",20]
+],
+"Bronie, Dodatki i Amunicja":[
+["PKM",60],["M249 SAW",50],["M240B",60],["SWD",60],
+["Grot wyborowy",70],["M40A5",70],["RPG-7",100],
+["RPG-75",70],["M72A3 LAW",75],["GROM",150],
+["Mine detector",100],["tłumik zwykły",50],["tłumik DMR",100],
+["optyka termal/NVG",250],["granatnik GP-25",50],
+["latarka / laser",20],
+["standardowa 5,56/5,45",1],["7,62 Beryl / Sa-58",2],["pistoletowa",1],
+["SWD 7,62 standard",2],["SWD 7,62 snajperska",3],
+["SWD 7,62 API",5],["SWD 7,62 Incendiary",5],
+["7,62 Grot standard",3],["7,62 Grot AP",6],["7,62 Grot SB",6],
+["M40A5 M61",4],["M40A5 M62",3],["M40A5 M80",2],["M110 M80A1",0],
+["M110 M993",0],["PKM 100 Rnd",5],["PKM 250 Rnd",10],
+["NSV incendiary AP",15],["NSV API",15],["7,62 450 rnd AP",45],
+["7,62 2000 rnd AP",150],["7,62 200 rnd FMJ/Tracer",15],
+["7,62 200 rnd AP",20],["M249 200 rnd",20],
+["12,7 100 rnd M2 FMJ",20],["12,7 100 rnd M2 AP",30],
+["12,7 100 rnd M2 INC",40],["AGS-17 HE",50],
+["RPG 70mm",10],["RPG 93mm",20],["RPG 105mm",30],
+["granatnik HE",5],["granatnik smoke",2],["granatnik flara",2]
+],
+"Wyposażenie":[
+["lornetka zwykła",10],["lornetka dalmierz",30],["grot granatnik",50],
+["Granat zaczepny",4],["Granat dymny",2],
+["Mina AP",10],["Mina AT",25],["ładunek M112",10],["detonator",20],
+["AN/PSN 13 DAGR",50],["sandbag",1],["sandbag box",20],["wirecutters",2],
+["NSV",150],["6T7 Tripod",50],["M252 Baseplate",50],["M252 Bipod",50],
+["M252 Cannon",200],["KORD",150],["AGS-17",500],["6G10 Tripod",50],["6T5 Tripod",50]
+],
+"Medykamenty":[
+["Morphine",1],["Epinephrine",2],["Nalexone",2],
+["Metopropol",2],["Phenylepine",2],["Sniff",2],
+["Saline solution",3],["NCD kit",2],
+["King LT",2],["Chest Seal",2],["Medical Kit",20]
+],
+"Drony":[
+["drone googles",200],["dron SAL",800],["battery SAL",100],
+["Drone controller",100],["Drone antena",250],["Command station",250]
+],
+"Pojazdy naziemne":[
+["M998",100],["UAZ-469",100],["M1025",150],
+["UAZ-469 - PKM",150],["M1025 - .50",200],["Ambulans M997",200],
+["M997 Jammer",200],["Furgonetka dostawcza UAZ-452",200],["M1280",250],
+["M1025 - M2",300],["M1281 - M2HB",350],["M1281 - M2HB",350],
+["M1025 M2 Opancerzony",350],["Humvee Inżynieryjny",400],
+["STAR 266 Transport Truck",500],["M1281 - M134",500],
+["STAR 266 Fuel Truck",600],["STAR 266 Enginner Truck",600],
+["STAR 266 Naprawczy",600],["STAR 266 CRANE",600],
+["STAR 266 Arsenal Truck",600],["UAZ469 z Granatnikiem AGS17",600],
+["STAR 266 M2HB",800],["STAR 266 MORTAR",800],
+["Pojazdy zwiadowczy BRDM-2",800],["KTO ROSOMAK transportowy bez działka",800],
+["STAR 266 Hibneryt",1000],["Transporter opancerzony BTR-70",1000],
+["STAR 266 Howitzer",1500],["Pojazdy zwiadowczy LAV-25",1500],
+["KTO ROSOMAK",2000],["M2A2",3000],["PT-91",7500],
+["M1A1",8000],["M1A1 - TUSK",9000]
+],
+"Pojazdy powietrzne":[
+["MH-6M",1500],["Mi-8MT Armed Transport",2500],
+["Mi-8MT Supply",2500],["Mi-8MT Construction",3500],
+["Mi-8MT FAB250",5000],["CH53 Stalion",8000],
+["Mi-24V Armed UB-16-57",10000],["Mi-24P Armed B-8V20A",15000],
+["Mi-24V Armed UPK-23",20000]
+],
+"Pociski dalekiego zasięgu":[
+["81mm Fragmentation",10],["81mm smoke",5],["81mm illumination",5],
+["M107 HE",35],["M231 charge 1L",5],["M231 chaege - 2L",10],
+["M232 charge 3H",15],["M232 charge 4H",20],["M232 charge 5H",25]
+]
 };
 
-// Funkcja renderująca całość
-function render() {
-  const app = document.getElementById("app");
-  app.innerHTML = "";
-
-  for (const [category, items] of Object.entries(data)) {
-    const catDiv = document.createElement("div");
-    catDiv.className = "category";
-
-    const header = document.createElement("div");
-    header.className = "category-header";
-    header.textContent = category;
-
-    const content = document.createElement("div");
-    content.className = "category-content";
-
-    header.onclick = () => {
-      content.style.display = content.style.display === "block" ? "none" : "block";
-    };
-
-    const table = document.createElement("table");
-    table.innerHTML = `
-      <thead>
-        <tr>
-          <th>Nazwa</th><th>Cena</th><th>Ilość</th><th>Koszt</th>
-        </tr>
-      </thead>
-      <tbody>
-      </tbody>
-    `;
-
-    const tbody = table.querySelector("tbody");
-
-    for (const [name, price] of items) {
-      const tr = document.createElement("tr");
-
-      tr.innerHTML = `
-        <td>${name}</td>
-        <td>${price}</td>
-        <td><input type="number" min="0" value="0" /></td>
-        <td class="cost">0</td>
-      `;
-
-      tbody.appendChild(tr);
-    }
-
-    content.appendChild(table);
-
-    // Podsumowanie kategorii
-    const subtotalDiv = document.createElement("div");
-    subtotalDiv.className = "subtotal";
-    subtotalDiv.textContent = "Suma kategorii: 0";
-    content.appendChild(subtotalDiv);
-
-    catDiv.appendChild(header);
-    catDiv.appendChild(content);
-    app.appendChild(catDiv);
-  }
-
-  // Po wyrenderowaniu wszystkich, dodajemy eventy
-  document.querySelectorAll("input[type=number]").forEach(input => {
-    input.addEventListener("input", updateAll);
-  });
+// -------------------- PRESETY KLAS --------------------
+const presets = {
+"Medyk": {
+"plecak \"zwykły\"":1,"standardowa 5,56/5,45":10,"Morphine":10,
+"Epinephrine":10,"Nalexone":5,"Metopropol":5,"Phenylepine":5,
+"Sniff":10,"Saline solution":5,"NCD kit":4,"King LT":4,
+"Chest Seal":4,"Medical Kit":1,"Granat zaczepny":2,
+"Granat dymny":4,"lornetka dalmierz":1
+},
+"KM’ista": {
+"M249 SAW":1,"plecak \"zwykły\"":1,"M249 200 rnd":10,
+"Morphine":2,"Epinephrine":2,"Sniff":2,"Saline solution":2,
+"Granat zaczepny":2,"Granat dymny":4,"lornetka dalmierz":1
+},
+"Ppanc": {
+"RPG-7":1,"plecak \"zwykły\"":1,"RPG 70mm":3,"RPG 105mm":1,
+"Morphine":2,"Epinephrine":2,"Sniff":2,"Saline solution":2,
+"Granat zaczepny":2,"Granat dymny":4,"lornetka dalmierz":1
+},
+"Grenadier": {
+"granatnik GP-25":1,"standardowa 5,56/5,45":10,"granatnik HE":10,
+"granatnik smoke":4,"Morphine":2,"Epinephrine":2,"Sniff":2,
+"Saline solution":3,"Granat zaczepny":2,"Granat dymny":4,
+"lornetka dalmierz":1,"wirecutters":1,"ładunek M112":8,"detonator":1
 }
+};
 
-// Aktualizacja kosztów i sum
-function updateAll() {
-  let grandTotal = 0;
-
-  document.querySelectorAll(".category").forEach(cat => {
-    let catTotal = 0;
-    const rows = cat.querySelectorAll("tbody tr");
-
-    rows.forEach(row => {
-      const price = parseFloat(row.cells[1].textContent);
-      const input = row.querySelector("input");
-      const qty = parseInt(input.value) || 0;
-      const cost = price * qty;
-      row.querySelector(".cost").textContent = cost;
-      catTotal += cost;
+// -------------------- RENDER --------------------
+function render(){
+  const app=document.getElementById("app");
+  app.innerHTML="";
+  for(const [cat,items] of Object.entries(data)){
+    const div=document.createElement("div"); div.className="category";
+    const head=document.createElement("div"); head.className="category-header"; head.textContent=cat;
+    const cont=document.createElement("div"); cont.className="category-content";
+    head.onclick=()=>cont.style.display=cont.style.display==="block"?"none":"block";
+    const table=document.createElement("table");
+    table.innerHTML="<tr><th>Nazwa</th><th>Cena</th><th>Ilość</th><th>Koszt</th></tr>";
+    items.forEach(i=>{
+      const row=document.createElement("tr");
+      row.innerHTML=`<td>${i[0]}</td><td>${i[1]}</td><td><input type="number" min="0"></td><td class="c">0</td>`;
+      table.appendChild(row);
     });
-
-    cat.querySelector(".subtotal").textContent = `Suma kategorii: ${catTotal}`;
-    grandTotal += catTotal;
-  });
-
-  document.getElementById("total").textContent = grandTotal;
+    cont.appendChild(table);
+    div.appendChild(head); div.appendChild(cont);
+    app.appendChild(div);
+  }
+  document.querySelectorAll("input").forEach(i=>i.oninput=update);
 }
 
-// Reset wszystkiego
-function resetAll() {
-  document.querySelectorAll("input[type=number]").forEach(input => {
-    input.value = 0;
+// -------------------- FUNKCJE --------------------
+function update(){
+  let total=0;
+  document.querySelectorAll("tr").forEach(r=>{
+    const price=parseFloat(r.children[1]?.textContent)||0;
+    const qty=parseInt(r.querySelector("input")?.value)||0;
+    if(r.querySelector(".c")) r.querySelector(".c").textContent=price*qty;
+    total+=price*qty;
   });
-  updateAll();
+  document.getElementById("total").textContent=total;
 }
 
-// Uruchamiamy render i wyliczenia startowe
-render();
-updateAll();
+function resetAll(){
+  document.querySelectorAll("input").forEach(i=>i.value="");
+  update();
+}
 
+function applyPreset(){
+  resetAll();
+  const selected=document.getElementById("preset").value;
+  const p=presets[selected];
+  if(!p) return;
+  document.querySelectorAll("tr").forEach(r=>{
+    const name=r.children[0].textContent;
+    if(p[name]!==undefined) r.querySelector("input").value=p[name];
+  });
+  update();
+}
+
+// -------------------- INIT --------------------
+const sel=document.getElementById("preset");
+Object.keys(presets).forEach(p=>{
+  const o=document.createElement("option"); o.textContent=p; sel.appendChild(o);
+});
+
+render(); update();
 </script>
-
 </body>
 </html>
